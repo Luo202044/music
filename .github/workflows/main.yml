@@ -1,0 +1,31 @@
+name: Update API with Music Files
+
+on:
+  # 当 music 文件夹内容有变化时触发
+  push:
+    paths:
+      - 'music/**'
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  update-api:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate file list
+        run: |
+          # 仅获取 music 目录下的直接文件（不含子目录），若需递归可改用 find music -type f
+          # 将文件名（含后缀）逐行写入 api.txt
+          find music -maxdepth 1 -type f -exec basename {} \; > api.txt
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add api.txt
+          # 仅当 api.txt 有改动时才提交
+          git diff --staged --quiet || git commit -m "chore: update api.txt with music files"
+          git push
